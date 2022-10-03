@@ -8,6 +8,7 @@ const events = {
   HEARTBEAT: consumerType('heartbeat'),
   COMMIT_OFFSETS: consumerType('commit_offsets'),
   GROUP_JOIN: consumerType('group_join'),
+  GROUP_LEAVE: consumerType('group_leave'),
   FETCH: consumerType('fetch'),
   FETCH_START: consumerType('fetch_start'),
   START_BATCH_PROCESS: consumerType('start_batch_process'),
