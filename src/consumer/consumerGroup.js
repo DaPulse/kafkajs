@@ -9,7 +9,7 @@ const Batch = require('./batch')
 const SeekOffsets = require('./seekOffsets')
 const SubscriptionState = require('./subscriptionState')
 const {
-  events: { GROUP_JOIN, HEARTBEAT, CONNECT, RECEIVED_UNSUBSCRIBED_TOPICS },
+  events: { GROUP_JOIN, GROUP_LEAVE, HEARTBEAT, CONNECT, RECEIVED_UNSUBSCRIBED_TOPICS },
 } = require('./instrumentationEvents')
 const { MemberAssignment } = require('./assignerProtocol')
 const {
@@ -193,6 +193,7 @@ module.exports = class ConsumerGroup {
     const { groupId, memberId, groupInstanceId } = this
     if (memberId) {
       await this.coordinator.leaveGroup({ groupId, memberId, groupInstanceId })
+      this.instrumentationEmitter.emit(GROUP_LEAVE, { groupId, memberId, groupInstanceId })
       this.memberId = null
     }
   }
