@@ -147,6 +147,7 @@ export interface IHeaders {
 
 export interface ConsumerConfig {
   groupId: string
+  groupInstanceId?: string
   partitionAssigners?: PartitionAssigner[]
   metadataMaxAge?: number
   sessionTimeout?: number
@@ -259,7 +260,7 @@ export interface ReplicaAssignment {
 }
 
 export interface PartitionReassignment {
-  topic: string,
+  topic: string
   partitionAssignment: Array<ReplicaAssignment>
 }
 
@@ -694,7 +695,10 @@ export type Broker = {
     topics: PartitionReassignment[]
     timeout?: number
   }): Promise<any>
-  listPartitionReassignments(request: { topics?: TopicPartitions[]; timeout?: number }): Promise<ListPartitionReassignmentsResponse>
+  listPartitionReassignments(request: {
+    topics?: TopicPartitions[]
+    timeout?: number
+  }): Promise<ListPartitionReassignmentsResponse>
 }
 
 interface MessageSetEntry {
@@ -893,6 +897,7 @@ export type ConsumerEvents = {
   HEARTBEAT: 'consumer.heartbeat'
   COMMIT_OFFSETS: 'consumer.commit_offsets'
   GROUP_JOIN: 'consumer.group_join'
+  GROUP_LEAVE: 'consumer.group_leave'
   FETCH_START: 'consumer.fetch_start'
   FETCH: 'consumer.fetch'
   START_BATCH_PROCESS: 'consumer.start_batch_process'
@@ -928,8 +933,16 @@ export type ConsumerGroupJoinEvent = InstrumentationEvent<{
   leaderId: string
   groupProtocol: string
   memberId: string
+  groupInstanceId: string
   memberAssignment: IMemberAssignment
 }>
+
+export type ConsumerGroupLeaveEvent = InstrumentationEvent<{
+  groupId: string
+  memberId: string
+  groupInstanceId: string
+}>
+
 export type ConsumerFetchStartEvent = InstrumentationEvent<{ nodeId: number }>
 export type ConsumerFetchEvent = InstrumentationEvent<{
   numberOfBatches: number
@@ -1024,7 +1037,7 @@ export type ConsumerSubscribeTopics = { topics: (string | RegExp)[]; fromBeginni
 
 export type Consumer = {
   connect(): Promise<void>
-  disconnect(): Promise<void>
+  disconnect(options: object): Promise<void>
   subscribe(subscription: ConsumerSubscribeTopics | ConsumerSubscribeTopic): Promise<void>
   stop(): Promise<void>
   run(config?: ConsumerRunConfig): Promise<void>
@@ -1045,6 +1058,10 @@ export type Consumer = {
   on(
     eventName: ConsumerEvents['GROUP_JOIN'],
     listener: (event: ConsumerGroupJoinEvent) => void
+  ): RemoveInstrumentationEventListener<typeof eventName>
+  on(
+    eventName: ConsumerEvents['GROUP_LEAVE'],
+    listener: (event: ConsumerGroupLeaveEvent) => void
   ): RemoveInstrumentationEventListener<typeof eventName>
   on(
     eventName: ConsumerEvents['FETCH_START'],
